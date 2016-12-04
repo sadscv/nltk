@@ -1,18 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# @Time    : 16-12-4 下午8:52
+# @Author  : sadscv
+# @File    : chunkFreatures.py
 import nltk
-
-
-def npchunk_features(sentence, i, history):
-    """
-
-    :param sentence:(word,tag)
-    :param i: int, 当前sentence第i个词
-    :param history: i前所有的tag(trunk)
-    :return:
-    """
-    word, pos = sentence[i]
-    return {"pos": pos}
+from chunkFreatures import npchunk_features_ultimate as \
+    npchunk_features
 
 
 class ConsecutiveNPChunkTagger(nltk.TaggerI):
@@ -27,17 +20,17 @@ class ConsecutiveNPChunkTagger(nltk.TaggerI):
         #对每个训练集中的句子
         for tagged_sent in train_sents:
 
-            # param untagged_sent: 生成untag(即untrunk)句子集合。
+            # param untagged_sent: 生成untag(即unchunk)句子集合。
             untagged_sent = nltk.tag.untag(tagged_sent)
 
-            #param history: 当前句中第i个词之前的所有tag(trunk)
+            #param history: 当前句中第i个词之前的所有tag(chunk)
             history = []
 
             # 对于每个句子中的每个词，提取出其特征，并将特征加入train_set。
             for i, (word, tag) in enumerate(tagged_sent):
                 featureset = npchunk_features(untagged_sent, i, history)
                 train_set.append((featureset, tag))
-                #history中加入之前的tag(trunk)
+                #history中加入之前的tag(chunk)
                 history.append(tag)
 
         # 创建最大熵分类器并用train_set训练。
@@ -92,14 +85,3 @@ class ConsecutiveNPChunker(nltk.ChunkParserI):
         conlltags = [(w,t,c) for ((w,t),c) in tagged_sents]
         return nltk.chunk.conlltags2tree(conlltags)
 
-
-if __name__ == '__main__':
-
-    from nltk.classify import megam
-    megam.config_megam('./megam.opt')
-
-    from nltk.corpus import conll2000
-    test_sents = conll2000.chunked_sents('test.txt', chunk_types=['NP'])
-    chunker = ConsecutiveNPChunker(test_sents)
-    print(chunker.evaluate(test_sents))
-    # # nltk.download()
